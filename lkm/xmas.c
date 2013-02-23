@@ -1,6 +1,3 @@
-#define __KERNEL__
-#define MODULE
-
 #include <linux/module.h>  
 #include <linux/slab.h>
 #include "../include/asm/uaccess.h"
@@ -12,8 +9,8 @@ static ssize_t xmas_write(struct file *, const char *, size_t, loff_t *);
 
 static int xmas_major;
 #define DEVICE_NAME "xmas"
-#define XMAS_OUT_0 17 // TODO: make this a module param
-#define XMAS_OUT_1 18
+#define XMAS_OUT_0 23 // TODO: make this a module param
+#define XMAS_OUT_1 24 
 
 /* Functions for character device */
 struct file_operations xmas_fops = {
@@ -26,6 +23,8 @@ struct file_operations xmas_fops = {
 
 int init_module()
 {
+    int status;
+
     printk("Loading the XMAS lights LKM...\n");
 
     /* Initialize the /dev/xmas character device
@@ -40,7 +39,6 @@ int init_module()
     printk("Registered char device %d\n", xmas_major);
 
     /* Initialize GPIO */
-    int status;
     status = gpio_request(XMAS_OUT_0, "xmas");
     if (status) {
         printk(KERN_ALERT "gpio_request for GPIO %d failed with %d\n",
@@ -73,7 +71,7 @@ void cleanup_module()
 static ssize_t
 xmas_write(struct file *filp, const char *in_buf, size_t len, loff_t * off)
 {
-    unsigned char *buf = in_buf;
+    unsigned const char *buf = in_buf;
 
     unsigned char cur_buf[5];
     int out_len = 0;
