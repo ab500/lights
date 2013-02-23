@@ -1,22 +1,15 @@
 #!/bin/bash
 
 # load kernel module
-cd ~pi/xmaspi/lkm
-insmod xmas.ko
-mknod /dev/xmas c 252 0
+insmod xmaspi.ko
+mknod /dev/xmas c 251 0
 chmod 222 /dev/xmas
 
 # run the init script
-cd ~pi/xmaspi
 ./driver.py
-
 
 # red status
 ./driver.py 99 200 0 0 13
-
-# start wireless
-./start-wireless.sh&
-
 
 # blink last LED to show we are done
 for i in `seq 1 5`
@@ -31,10 +24,4 @@ pid=$!
 sleep 5
 kill $pid
 
-
 ntpdate -ub 0.us.pool.ntp.org
-
-su xmaslights
-cd /home/xmaslights/xmaspi/
-./xmas.py &
-

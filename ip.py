@@ -21,12 +21,6 @@ def get_interface_ip(ifname):
         return saddr[20:24]
 
 out_str = ''
-try:
-    wlan_ip = get_interface_ip('wlan1')
-    print socket.inet_ntoa(wlan_ip)
-    out_str = wlan_ip + '\x00'
-except:
-    print 'uh oh' 
 
 try:
     eth0_ip = get_interface_ip('eth0')
