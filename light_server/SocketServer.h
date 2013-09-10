@@ -37,7 +37,6 @@ public:
     void BeginListening();
     void StopListening();
     void SetDispatcherCallback(std::function<void(const SocketCommand&)> func);
-    void AttachDebugPrinter(std::function<void(const std::string&)> func);
 private:
     void RunListener();
     void ConnectionDataCallback(const SocketCommand&);
@@ -49,11 +48,10 @@ private:
     std::vector<std::unique_ptr<SocketConnection>> m_activeConnections;
     std::thread m_listenerThread;
     std::mutex m_listenerLock;
-    std::function<void(const std::string&)> m_debugPrinter;
     bool m_isRunning;
     int m_sockfd;
     
-    const int c_port = 5000;
+    const int c_port = 5001;
     const int c_backlog = 5;
 };
 

@@ -9,7 +9,7 @@ obj-m += $(TARGET).o
 xmaspi-objs = xmas.o
 
 # Set this is your linux kernel checkout.
-KDIR := /home/androbin/rpi/linux
+KDIR := /home/androbin/linux
 PWD := $(shell pwd)
 
 default:

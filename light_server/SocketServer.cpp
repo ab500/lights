@@ -120,6 +120,7 @@ void SocketServer::SetupSocket()
 
 void SocketServer::CloseSocket()
 {
+    shutdown(m_sockfd, SHUT_RDWR);
     close(m_sockfd);
     m_sockfd = -1;
 }
@@ -175,7 +176,10 @@ SocketConnection::SocketConnection(
 
 SocketConnection::~SocketConnection()
 {
-    m_receiverThread.join();
+    if (m_sockfd != -1) {
+        shutdown(m_sockfd, SHUT_RDWR);
+        close(m_sockfd);
+    }
 }
 
 void SocketConnection::SetDeletionCallback(std::function<void()> deletionCallback)
@@ -185,5 +189,21 @@ void SocketConnection::SetDeletionCallback(std::function<void()> deletionCallbac
 
 void SocketConnection::RunReceiver()
 {
+    while (true) {
+        uint32_t bytesToRead = 0;
+        ssize_t byteLen = recv(m_sockfd, static_cast<void*>(&bytesToRead), sizeof(uint32_t), MSG_WAITALL);
 
+        if (byteLen == 4) {
+            std::cout << "Payload is " << bytesToRead << " bytes." << std::endl;
+        }
+        else {
+            std::cout << "Invalid data received from socket " << m_sockfd << 
+                ". Aborting connection." << std::endl;
+            m_receiverThread.detach();
+            if (m_deletionCallback) {
+                m_deletionCallback();
+            }
+            break;
+        }
+    }
 }

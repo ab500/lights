@@ -4,10 +4,15 @@
 #include <linux/fs.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
+#include <linux/hrtimer.h>
 
 static ssize_t xmas_write(struct file *, const char *, size_t, loff_t *);
 
 static int xmas_major;
+
+static struct hrtimer lights_timer;
+static enum hrtimer_restart lights_timer_cb(struct hrtimer *timer);
+
 #define DEVICE_NAME "xmas"
 #define XMAS_OUT_0 23 // TODO: make this a module param
 #define XMAS_OUT_1 24 
@@ -24,6 +29,8 @@ struct file_operations xmas_fops = {
 int init_module()
 {
     int status;
+    
+    ktime_t kt = ktime_set(0, 1000 * 20000);
 
     printk("Loading the XMAS lights LKM...\n");
 
@@ -54,6 +61,10 @@ int init_module()
     gpio_direction_output(XMAS_OUT_0, 0);
     gpio_direction_output(XMAS_OUT_1, 0);
 
+    hrtimer_init(&lights_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+    lights_timer.function = &lights_timer_cb;
+    hrtimer_start(&lights_timer, kt, HRTIMER_MODE_REL);
+
     return 0;
 }
 
@@ -65,6 +76,7 @@ void cleanup_module()
 
     unregister_chrdev(xmas_major, DEVICE_NAME);
 
+    hrtimer_cancel(&lights_timer);
     printk("Unloaded xmas\n");
 }
 
@@ -78,9 +90,10 @@ xmas_write(struct file *filp, const char *in_buf, size_t len, loff_t * off)
 
     while (len >= 5) {
 
+        unsigned int gpio_pin = XMAS_OUT_0;
+
         copy_from_user(cur_buf, buf, 5);
 
-        unsigned int gpio_pin = XMAS_OUT_0;
         if (cur_buf[0] & 0x40) {
             gpio_pin = XMAS_OUT_1;
         }
@@ -142,6 +155,20 @@ xmas_write(struct file *filp, const char *in_buf, size_t len, loff_t * off)
     return out_len;
 }
 
+static int lights_toggle = 0;
+
+static enum hrtimer_restart lights_timer_cb(struct hrtimer *timer)
+{
+     
+    gpio_set_value(XMAS_OUT_0, lights_toggle);
+    lights_toggle = lights_toggle ? 0 : 1; 
+    ktime_t kt_now;
+    ktime_t kt_period = ktime_set(0, 1000 * (lights_toggle ? 20 : 10));
+
+    kt_now = hrtimer_cb_get_time(&lights_timer);
+    hrtimer_forward(&lights_timer, kt_now, kt_period);
+    return HRTIMER_RESTART;
+}
 
 MODULE_AUTHOR("Eric Wustrow");
 MODULE_DESCRIPTION("Bit-bang GPIO 17 to drive xmas LEDs ");

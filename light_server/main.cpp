@@ -14,6 +14,6 @@ int main (int argc, char** argv)
 {
     LightsCore lc;
     lc.Run();
-    sleep(3);
+    std::cin.ignore();
     return 0;
 }
