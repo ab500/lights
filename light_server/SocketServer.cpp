@@ -29,14 +29,15 @@ SocketCommand::~SocketCommand()
 
 SocketServer::SocketServer()
     : m_isRunning(false)
+    , m_inFinalRelease(true)
     , m_sockfd(-1)
 {
 }
 
 SocketServer::~SocketServer()
 {
+    m_inFinalRelease = true;
     StopListening();
-    // Clear the queue of accetped connections.
 }
 
 void SocketServer::BeginListening()
@@ -152,12 +153,14 @@ void SocketServer::RemoveConnection(SocketConnection* connPtr)
 {
     std::cout << "Removing socket ID " << connPtr << std::endl;
     std::lock_guard<std::mutex> lock(m_listenerLock);
-    m_activeConnections.erase(
-        std::remove_if(
-            m_activeConnections.begin(),
-            m_activeConnections.end(),
-            [connPtr](std::unique_ptr<SocketConnection>& item) 
-            { return item.get() == connPtr; })); 
+    if (!m_inFinalRelease) {
+        m_activeConnections.erase(
+            std::remove_if(
+                m_activeConnections.begin(),
+                m_activeConnections.end(),
+                [connPtr](std::unique_ptr<SocketConnection>& item) 
+                { return item.get() == connPtr; })); 
+    }
 }
 
 void SocketServer::ConnectionDataCallback(const SocketCommand&)
@@ -180,6 +183,13 @@ SocketConnection::~SocketConnection()
         shutdown(m_sockfd, SHUT_RDWR);
         close(m_sockfd);
     }
+    
+    if (std::this_thread::get_id() != m_receiverThread.get_id()) {
+        m_receiverThread.join();
+    }
+    else {
+        m_receiverThread.detach();
+    }
 }
 
 void SocketConnection::SetDeletionCallback(std::function<void()> deletionCallback)
@@ -191,15 +201,35 @@ void SocketConnection::RunReceiver()
 {
     while (true) {
         uint32_t bytesToRead = 0;
-        ssize_t byteLen = recv(m_sockfd, static_cast<void*>(&bytesToRead), sizeof(uint32_t), MSG_WAITALL);
+        bool succeeded = false;
 
-        if (byteLen == 4) {
-            std::cout << "Payload is " << bytesToRead << " bytes." << std::endl;
+        ssize_t byteLen = recv(m_sockfd, static_cast<void*>(&bytesToRead), sizeof(uint32_t), MSG_WAITALL);
+        std::cout << "Received " << byteLen << " bytes. Payload is " << bytesToRead << " bytes." << std::endl;
+
+        if (byteLen == 4 && bytesToRead <= c_bufferSize) {
+            uint8_t payload[byteLen];
+            std::fill(payload, payload+byteLen, 0);
+
+            ssize_t bytesRead = recv(m_sockfd, static_cast<void*>(payload), byteLen, MSG_WAITALL);
+
+            if (bytesRead == bytesToRead) {
+                succeeded = true;
+                
+                if (m_dataCallback) {
+                    SocketCommand sockCmd = SocketCommand(payload[0], byteLen - 1, payload + 1); 
+                    m_dataCallback(sockCmd);
+                }
+            }
+            else {
+                std::cout << "Byte length is only.... " << bytesRead << std::endl;
+            }
         }
-        else {
-            std::cout << "Invalid data received from socket " << m_sockfd << 
+
+        if (!succeeded) {
+            std::cout << "Closed / Invalid data received from socket " << m_sockfd << 
                 ". Aborting connection." << std::endl;
-            m_receiverThread.detach();
+
+            // Fire off a callback into the dark
             if (m_deletionCallback) {
                 m_deletionCallback();
             }

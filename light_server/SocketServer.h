@@ -49,6 +49,7 @@ private:
     std::thread m_listenerThread;
     std::mutex m_listenerLock;
     bool m_isRunning;
+    bool m_inFinalRelease;
     int m_sockfd;
     
     const int c_port = 5001;
@@ -69,4 +70,6 @@ private:
     std::function<void(const SocketCommand&)> m_dataCallback;
     std::function<void()> m_deletionCallback;
     std::thread m_receiverThread;
+
+    const uint32_t c_bufferSize = 256;
 };
