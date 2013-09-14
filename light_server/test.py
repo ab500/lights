@@ -19,5 +19,6 @@ print payload + 'abcd'
 s.send(payload + 'abcd')
 
 # Close the connection
-input("Press any key to close the connection...")
+raw_input("Press any key to close the connection...")
 s.close()
+

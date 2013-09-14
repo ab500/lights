@@ -184,11 +184,15 @@ SocketConnection::~SocketConnection()
         close(m_sockfd);
     }
     
+    // Lifetime management of this object is a little tricky. There's
+    // two ways this object can fall out of existence:
+    // 1) When the socket is closed by the client it will invoke from
+    //    the listening thread the deletion callback to have SocketServer
+    //    destruct it.
+    // 2) When SocketServer itself is being destructed (application shutdown)
+    //    we actually shutdown the listener thread and join.
     if (std::this_thread::get_id() != m_receiverThread.get_id()) {
         m_receiverThread.join();
-    }
-    else {
-        m_receiverThread.detach();
     }
 }
 
@@ -217,6 +221,7 @@ void SocketConnection::RunReceiver()
                 
                 if (m_dataCallback) {
                     SocketCommand sockCmd = SocketCommand(payload[0], byteLen - 1, payload + 1); 
+                    // Fire off a callback into the dark
                     m_dataCallback(sockCmd);
                 }
             }
@@ -229,7 +234,6 @@ void SocketConnection::RunReceiver()
             std::cout << "Closed / Invalid data received from socket " << m_sockfd << 
                 ". Aborting connection." << std::endl;
 
-            // Fire off a callback into the dark
             if (m_deletionCallback) {
                 m_deletionCallback();
             }
