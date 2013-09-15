@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <algorithm>
 
-SocketCommand::SocketCommand(uint8_t commandId, uint8_t payloadLen, const uint8_t* payloadPtr)
+SocketCommand::SocketCommand(uint8_t commandId, uint32_t payloadLen, const uint8_t* payloadPtr)
     : m_commandId(commandId)
     , m_payloadLen(payloadLen)
     , m_payloadBuf(nullptr)
@@ -27,8 +27,9 @@ SocketCommand::~SocketCommand()
     }
 }
 
-SocketServer::SocketServer()
-    : m_isRunning(false)
+SocketServer::SocketServer(std::function<void(const SocketCommand&)> dispatcherCallback)
+    : m_dispatcherCallback(dispatcherCallback)
+    , m_isRunning(false)
     , m_inFinalRelease(true)
     , m_sockfd(-1)
 {
@@ -59,10 +60,6 @@ void SocketServer::StopListening()
         m_isRunning = false;
         m_listenerThread.join();
     }
-}
-
-void SocketServer::SetDispatcherCallback(std::function<void(const SocketCommand&)> func)
-{
 }
 
 void SocketServer::RunListener()
@@ -163,9 +160,9 @@ void SocketServer::RemoveConnection(SocketConnection* connPtr)
     }
 }
 
-void SocketServer::ConnectionDataCallback(const SocketCommand&)
+void SocketServer::ConnectionDataCallback(const SocketCommand& cmd)
 {
-
+   m_dispatcherCallback(cmd); 
 }
 
 SocketConnection::SocketConnection(
@@ -190,7 +187,10 @@ SocketConnection::~SocketConnection()
     //    the listening thread the deletion callback to have SocketServer
     //    destruct it.
     // 2) When SocketServer itself is being destructed (application shutdown)
-    //    we actually shutdown the listener thread and join.
+    //    we actually shutdown the listener thread from the other thread and join.
+    //
+    // Either way, at the end of this function the object can safely be destructed
+    // and the listening thread is dead.
     if (std::this_thread::get_id() != m_receiverThread.get_id()) {
         m_receiverThread.join();
     }
@@ -236,6 +236,8 @@ void SocketConnection::RunReceiver()
 
             if (m_deletionCallback) {
                 m_deletionCallback();
+                // The object may be destructed after this point. Do not access any
+                // member state.
             }
             break;
         }
