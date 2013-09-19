@@ -4,6 +4,7 @@
 LightsCore::LightsCore()
     : m_socketServer(std::bind(&LightsCore::DispatcherCallback, this, std::placeholders::_1))
 {
+    m_socketTester.RegisterCallbacks(m_commandMap);
 }
 
 LightsCore::~LightsCore()
@@ -13,7 +14,14 @@ LightsCore::~LightsCore()
 
 void LightsCore::DispatcherCallback(const SocketCommand& command)
 {
-
+    const int commandId = command.GetCommandId();
+    
+    if (m_commandMap.count(commandId) > 0) {
+        m_commandMap[commandId](command);
+    }
+    else {
+        std::cout << "Command id not recognized." << std::endl;
+    }
 }
 
 void LightsCore::Run()

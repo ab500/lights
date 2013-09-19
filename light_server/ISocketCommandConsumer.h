@@ -16,5 +16,5 @@ public:
     virtual void UnregisterCallbacks(
         std::map<
             unsigned int, 
-            std::function<void(const SocketCommand&)>> & commandMap) = 0; 
+            std::function<void(const SocketCommand&)>>& commandMap) = 0; 
 };

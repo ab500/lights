@@ -11,20 +11,25 @@
 #include <stdexcept>
 #include <algorithm>
 
-SocketCommand::SocketCommand(uint8_t commandId, uint32_t payloadLen, const uint8_t* payloadPtr)
+SocketCommand::SocketCommand(
+    uint8_t commandId, 
+    uint32_t payloadLen, 
+    const uint8_t* payloadPtr, 
+    std::function<void(uint32_t, const uint8_t*)> sendCallback)
     : m_commandId(commandId)
     , m_payloadLen(payloadLen)
-    , m_payloadBuf(nullptr)
+    , m_payloadBuf(payloadPtr)
+    , m_sendCallback(sendCallback)
 {
-    m_payloadBuf = new uint8_t[payloadLen];
 }
 
 SocketCommand::~SocketCommand()
 {
-    if (m_payloadBuf) {
-        delete[] m_payloadBuf;
-        m_payloadBuf = nullptr;
-    }
+}
+
+void SocketCommand::Ack(uint32_t payloadLen, const uint8_t* payloadPtr) const
+{
+    m_sendCallback(payloadLen, payloadPtr);
 }
 
 SocketServer::SocketServer(std::function<void(const SocketCommand&)> dispatcherCallback)
@@ -196,6 +201,29 @@ SocketConnection::~SocketConnection()
     }
 }
 
+void SocketConnection::SendData(uint32_t payloadLen, const uint8_t* payloadPtr)
+{
+    if (m_sockfd == -1) {
+        throw std::runtime_error("Socket connection closed");
+    } 
+
+    ssize_t ret = -1;
+
+    ret = send(m_sockfd, (void*) &payloadLen, 4, 0);
+
+    if (ret == -1) {
+        throw std::runtime_error("Socket connection closed");
+    } 
+
+    std::cout << "sending ack of " << payloadLen << " bytes." << std::endl;
+    ret = send(m_sockfd, (void*) payloadPtr, payloadLen, 0);
+
+    if (ret == -1) {
+        throw std::runtime_error("Socket connection closed");
+    } 
+
+}
+
 void SocketConnection::SetDeletionCallback(std::function<void()> deletionCallback)
 {
     m_deletionCallback = deletionCallback;
@@ -211,16 +239,23 @@ void SocketConnection::RunReceiver()
         std::cout << "Received " << byteLen << " bytes. Payload is " << bytesToRead << " bytes." << std::endl;
 
         if (byteLen == 4 && bytesToRead <= c_bufferSize) {
-            uint8_t payload[byteLen];
-            std::fill(payload, payload+byteLen, 0);
+            uint8_t payload[bytesToRead];
+            std::fill(payload, payload+bytesToRead, 0);
 
-            ssize_t bytesRead = recv(m_sockfd, static_cast<void*>(payload), byteLen, MSG_WAITALL);
+            ssize_t bytesRead = recv(m_sockfd, static_cast<void*>(payload), bytesToRead, MSG_WAITALL);
 
             if (bytesRead == bytesToRead) {
                 succeeded = true;
                 
                 if (m_dataCallback) {
-                    SocketCommand sockCmd = SocketCommand(payload[0], byteLen - 1, payload + 1); 
+                    SocketCommand sockCmd = SocketCommand(
+                        payload[0], 
+                        bytesRead - 1, 
+                        payload + 1,
+                        std::bind(
+                            &SocketConnection::SendData, 
+                            this, std::placeholders::_1,
+                            std::placeholders::_2)); 
                     // Fire off a callback into the dark
                     m_dataCallback(sockCmd);
                 }

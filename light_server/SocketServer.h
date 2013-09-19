@@ -11,16 +11,17 @@
 class SocketCommand
 {
 public:
-    SocketCommand(uint8_t commandId, uint32_t payloadLen, const uint8_t* payloadPtr);
+    SocketCommand(uint8_t commandId, uint32_t payloadLen, const uint8_t* payloadPtr, std::function<void(uint32_t, const uint8_t*)> sendCallback);
     ~SocketCommand();
     uint8_t GetCommandId() const { return m_commandId; }
-    uint8_t GetLength() const { return m_payloadLen; }
+    uint32_t GetLength() const { return m_payloadLen; }
     const uint8_t* GetBuffer() const { return m_payloadBuf; }
-    void Ack(uint8_t payloadLen, const uint8_t* payloadPtr);
+    void Ack(uint32_t payloadLen, const uint8_t* payloadPtr) const;
 private:
-    uint8_t m_commandId;
-    uint32_t m_payloadLen;
-    uint8_t* m_payloadBuf;   
+    const uint8_t m_commandId;
+    const uint32_t m_payloadLen;
+    const uint8_t* m_payloadBuf;   
+    const std::function<void(uint32_t, const uint8_t*)> m_sendCallback;
 };
 
 class SocketConnection;
@@ -71,6 +72,7 @@ public:
 
 private:
     void RunReceiver();
+    void SendData(uint32_t payloadLen, const uint8_t* payloadPtr);
 
     int m_sockfd;
     std::function<void(const SocketCommand&)> m_dataCallback;
