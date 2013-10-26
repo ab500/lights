@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdint.h>
 #include <vector>
 #include <utility>
 
+#include <stdint.h>
 
 struct BulbCommand
 {
@@ -15,7 +15,11 @@ struct BulbCommand
 
 class LightBoard
 {
+public:
     void SetBulb(int bulbIdx, BulbCommand cmd);
     void GetUpdate(std::vector<std::pair<int, BulbCommand>> & deltaList);
     void Reset(bool generateClearCommands);
+
+private:
+    std::vector<std::pair<int, BulbCommand>> m_pendingUpdates;
 };

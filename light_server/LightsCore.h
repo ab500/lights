@@ -26,3 +26,5 @@ private:
         unsigned int, 
         std::function<void(const SocketCommand&)>> m_commandMap;
 };
+
+
