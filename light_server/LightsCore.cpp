@@ -5,6 +5,7 @@ LightsCore::LightsCore()
     : m_socketServer(std::bind(&LightsCore::DispatcherCallback, this, std::placeholders::_1))
 {
     m_socketTester.RegisterCallbacks(m_commandMap);
+    m_patternRunner.RegisterCallbacks(m_commandMap);
 }
 
 LightsCore::~LightsCore()
