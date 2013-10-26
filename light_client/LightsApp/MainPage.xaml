@@ -10,8 +10,12 @@
     <Grid Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock Text="Lights" Style="{StaticResource HeaderTextStyle}" Margin="0,10,0,30" HorizontalAlignment="Center" />
-            <TextBox x:Name="txtIPAddress" Width="400" />
-            <Button x:Name="btnConnect" Content="Connect" HorizontalAlignment="Center" Margin="0,10" />
+            <StackPanel>
+                <TextBox x:Name="txtHostString" Width="400" PlaceholderText="Enter an IP or Hostname here." />
+                <TextBlock x:Name="lblError" Text="Invalid hostname entered." Foreground="Red" Style="{StaticResource BasicTextStyle}" Visibility="Collapsed" />
+            </StackPanel>
+            <Button x:Name="btnConnect" Content="Connect" HorizontalAlignment="Center" Margin="0,10" Click="btnConnect_Click" />
+            <ProgressRing x:Name="progressIndicator" Width="75" Height="75" Foreground="White" Margin="0,15,0,0" />
         </StackPanel>
     </Grid>
 </Page>

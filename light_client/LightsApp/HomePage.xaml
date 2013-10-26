@@ -10,19 +10,27 @@
     <Grid Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition/>
+            <RowDefinition Height="85*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock Style="{StaticResource HeaderTextStyle}" Text="Lights" Margin="15,15,15,25" />
-        <StackPanel Grid.Row="1" Margin="15,15">
+        <StackPanel Grid.Row="2" Margin="15,6.94,15,15">
             <TextBlock Style="{StaticResource SubheaderTextStyle}" Text="Global Settings" Margin="0,0,0,20" />
+            <ComboBox Header="Pattern" Margin="0,10">
+                <ComboBoxItem Content="Rainbow" />
+            </ComboBox>
             <Slider Header="Brightness" />
+            <Slider Header="Hue" />
+            <Slider Header="Saturation" />
+            <ToggleSwitch Header="Night Mode" />
         </StackPanel>
-        <StackPanel Grid.Row="1" Grid.Column="1" Margin="15">
+        <StackPanel Grid.Row="2" Grid.Column="1" Margin="15,6.94,15,15">
             <TextBlock Style="{StaticResource SubheaderTextStyle}" Text="Pattern Settings" />
+            <TextBlock Style="{StaticResource BasicTextStyle}" Text="No settings available" Margin="5,10" />
         </StackPanel>
     </Grid>
 </Page>
