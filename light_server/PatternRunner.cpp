@@ -21,8 +21,7 @@ void PatternRunner::RegisterCallbacks(
 {
     if (commandMap.count(CallbackDefinitions::PatternRunner::ReadSettings) > 0 ||
         commandMap.count(CallbackDefinitions::PatternRunner::WriteSettings) > 0 ||
-        commandMap.count(CallbackDefinitions::PatternRunner::ResetDevice) > 0)
-    {
+        commandMap.count(CallbackDefinitions::PatternRunner::ResetDevice) > 0) {
        throw std::runtime_error("Callback already registered."); 
     }
 
@@ -68,6 +67,24 @@ void PatternRunner::ReadSettingsCallback(const SocketCommand& command)
 void PatternRunner::WriteSettingsCallback(const SocketCommand& command)
 {
     std::cout << "WriteSettings command received." << std::endl;
+    
+    if (command.GetLength() != 4) {
+        std::cout << "Error. WriteSettings length incorrect." << std::endl;
+    }
+
+    const uint8_t* request = command.GetBuffer();
+
+    m_brightness = request[0];
+    m_hue = request[1];
+    m_saturation = request[2];
+    m_nightMode = request[3];
+
+    std::cout << "WriteSettings: B: " << 
+        (int)m_brightness << " H: " << 
+        (int)m_hue << " S: " << 
+        (int)m_saturation << " NM: " << 
+        (int)m_nightMode << std::endl;
+    command.Ack(0, nullptr);
 }
 
 void PatternRunner::ResetDeviceCallback(const SocketCommand& command)
