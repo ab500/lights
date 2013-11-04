@@ -43,8 +43,7 @@ namespace Lights
         private const byte WriteSettingsServiceId = 2;
         private const string _hostPort = "5001";
         private Windows.Networking.Sockets.StreamSocket _socket = null;
-        private SettingsData _currentData;
-        private SettingsData? _pendingData;
+        private bool _pendingSend = false;
 
         public LightsClient()
         {
@@ -58,7 +57,6 @@ namespace Lights
                 _socket = new Windows.Networking.Sockets.StreamSocket();
                 var host = new HostName(hostString);
                 await _socket.ConnectAsync(host, _hostPort);
-                await ReadSettings();
             }
             catch (Exception e) {
                 System.Diagnostics.Debug.WriteLine("Connection failed: " + e.Message);
@@ -66,11 +64,10 @@ namespace Lights
                 return CommandResult.Failed;
             }
 
-            await System.Threading.Tasks.Task.Delay(2000);
-            return CommandResult.Succeeded;
+            return await ReadSettings();
         }
 
-        private async Task ReadSettings()
+        private async Task<CommandResult> ReadSettings()
         {
             LightsCommand lc = new LightsCommand()
             {
@@ -90,6 +87,8 @@ namespace Lights
                 await writer.StoreAsync();
 
                 DataReader reader = new DataReader(_socket.InputStream);
+                reader.ByteOrder = ByteOrder.BigEndian;
+
                 drlo = reader.LoadAsync(4);
                 await Task.WhenAny(new Task[] { drlo.AsTask(), Task.Delay(2000) });
                 if (drlo.Status != Windows.Foundation.AsyncStatus.Completed)
@@ -121,23 +120,29 @@ namespace Lights
             {
                 System.Diagnostics.Debug.WriteLine("Read failed: " + e.Message);
                 CloseConnection(true);
-                return;
+                return CommandResult.Failed;
             }
 
             SettingsData sd = ByteArrayAsDataStruct<SettingsData>(responseAsBytes);
-            _hue = (double)sd.Hue / 255;
-            _brightness = (double)sd.Brightness / 255;
+            _hue = (double)sd.Hue / 255 * 100;
+            _brightness = (double)sd.Brightness / 255 * 100;
+            _saturation = (double)sd.Saturation / 255 * 100;
             _nightMode = sd.NightMode == 1;
             OnPropertyChanged("Hue");
             OnPropertyChanged("Brightness");
             OnPropertyChanged("NightMode");
+            OnPropertyChanged("Saturation");
+
+            return CommandResult.Succeeded;
         }
-        private async Task WriteSettings(SettingsData newSettings)
+        private async Task<CommandResult> WriteSettings(SettingsData newSettings)
         {
+            return CommandResult.Succeeded;
         }
 
-        private async Task ResetDevice()
+        private async Task<CommandResult> ResetDevice()
         {
+            return CommandResult.Succeeded;
         }
 
         #region Communication Helpers
@@ -161,13 +166,13 @@ namespace Lights
         {
             [FieldOffset(0)]
             public int Value;
-            [FieldOffset(0)]
-            public byte Byte1;
-            [FieldOffset(1)]
-            public byte Byte2;
-            [FieldOffset(2)]
-            public byte Byte3;
             [FieldOffset(3)]
+            public byte Byte1;
+            [FieldOffset(2)]
+            public byte Byte2;
+            [FieldOffset(1)]
+            public byte Byte3;
+            [FieldOffset(0)]
             public byte Byte4;
 
             public Int32Converter(int value)
@@ -232,6 +237,7 @@ namespace Lights
         private bool _nightMode = false;
         private double _brightness = 0.0;
         private double _hue = 0.0;
+        private double _saturation = 0.0;
 
         public bool NightMode
         {
@@ -243,6 +249,12 @@ namespace Lights
         {
             get { return _brightness; }
             set { _brightness = value; OnPropertyChanged(); }
+        }
+
+        public double Saturation
+        {
+            get { return _saturation;  }
+            set { _saturation = value; OnPropertyChanged(); }
         }
 
         public double Hue
