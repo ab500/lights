@@ -16,6 +16,7 @@ struct BulbCommand
 class LightBoard
 {
 public:
+    static const int BulbCount = 100;
     void SetBulb(int bulbIdx, BulbCommand cmd);
     void GetUpdate(std::vector<std::pair<int, BulbCommand>> & deltaList);
     void Reset(bool generateClearCommands);

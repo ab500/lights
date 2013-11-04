@@ -3,14 +3,19 @@
 #include <map>
 #include <functional>
 #include <stdint.h>
+#include <thread>
 
+#include "Driver.h"
+#include "LightBoard.h"
 #include "ISocketCommandConsumer.h"
+#include "IPattern.h"
 
 class PatternRunner:
     public ISocketCommandConsumer
 {
 public:
     PatternRunner();
+    ~PatternRunner();
 
     virtual void RegisterCallbacks(
         std::map<
@@ -23,8 +28,14 @@ public:
 
     void Start();
     void Stop();
+    void SetPattern(IPattern* pPattern);
 
 private:
+    LightBoard m_board;
+    IPattern* m_pCurrentPattern;
+
+    std::thread m_tickThread;
+    bool m_isRunning;
     uint8_t m_brightness;
     uint8_t m_hue;
     uint8_t m_saturation;
@@ -33,4 +44,5 @@ private:
     void ReadSettingsCallback(const SocketCommand& command);
     void WriteSettingsCallback(const SocketCommand& command);
     void ResetDeviceCallback(const SocketCommand& command);
+    void Run();
 };

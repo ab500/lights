@@ -7,11 +7,18 @@
 #include "SocketServer.h"
 
 PatternRunner::PatternRunner()
-    : m_brightness(200)
+    : m_pCurrentPattern(nullptr)
+    , m_isRunning(false)
+    , m_brightness(200)
     , m_hue(128)
     , m_saturation(255)
     , m_nightMode(0)
 {
+}
+
+PatternRunner::~PatternRunner()
+{
+
 }
 
 void PatternRunner::RegisterCallbacks(
@@ -102,4 +109,9 @@ void PatternRunner::Start()
 void PatternRunner::Stop()
 {
     // Stop/Join the running tick thread.
+}
+
+void PatternRunner::Run()
+{
+
 }

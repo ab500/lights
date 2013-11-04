@@ -10,7 +10,7 @@ LightsCore::LightsCore()
 
 LightsCore::~LightsCore()
 {
-
+    Driver::CloseDevice();
 }
 
 void LightsCore::DispatcherCallback(const SocketCommand& command)
@@ -27,9 +27,9 @@ void LightsCore::DispatcherCallback(const SocketCommand& command)
 
 void LightsCore::Run()
 {
+    Driver::OpenDevice();
     std::cout << "Initializing main routine..." << std::endl;
+    m_patternRunner.Start();
     m_socketServer.BeginListening();
-    // Initialize the PatternRunner, SocketServer
-    // Start the PatternRunner thread
 }
 
