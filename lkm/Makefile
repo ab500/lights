@@ -1,5 +1,3 @@
-#ARCH=arm
-#CROSS_COMPILE=arm-linux-gnueabi-gcc
 DRIVER = spike
 
 TARGET = xmaspi
