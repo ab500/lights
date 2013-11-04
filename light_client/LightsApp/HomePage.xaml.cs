@@ -24,6 +24,7 @@ namespace Lights
         public HomePage()
         {
             this.InitializeComponent();
+            this.DataContext = ((App)App.Current).Client;
         }
 
         /// <summary>

@@ -5,7 +5,6 @@
     xmlns:local="using:Lights"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    DataContext="App.Current.Client"
     mc:Ignorable="d">
 
     <Grid Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
@@ -24,7 +23,7 @@
             <ComboBox Header="Pattern" Margin="0,10">
                 <ComboBoxItem Content="Rainbow" />
             </ComboBox>
-            <Slider Header="Brightness" Value="{Binding Brightness}" />
+            <Slider Header="Brightness" Value="{Binding Brightness}" Minimum="0" Maximum="100" />
             <Slider Header="Hue" Value="{Binding Hue}" />
             <Slider Header="Saturation" Value="{Binding Saturation}" />
             <ToggleSwitch Header="Night Mode" IsOn="{Binding NightMode}" />
