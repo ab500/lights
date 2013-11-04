@@ -209,7 +209,8 @@ void SocketConnection::SendData(uint32_t payloadLen, const uint8_t* payloadPtr)
 
     ssize_t ret = -1;
 
-    ret = send(m_sockfd, (void*) &payloadLen, 4, 0);
+    uint32_t payloadLenN = htonl(payloadLen);
+    ret = send(m_sockfd, (void*) &payloadLenN, 4, 0);
 
     if (ret == -1) {
         throw std::runtime_error("Socket connection closed");
@@ -236,6 +237,7 @@ void SocketConnection::RunReceiver()
         bool succeeded = false;
 
         ssize_t byteLen = recv(m_sockfd, static_cast<void*>(&bytesToRead), sizeof(uint32_t), MSG_WAITALL);
+        bytesToRead = ntohl(bytesToRead);
         std::cout << "Received " << byteLen << " bytes. Payload is " << bytesToRead << " bytes." << std::endl;
 
         if (byteLen == 4 && bytesToRead <= c_bufferSize) {

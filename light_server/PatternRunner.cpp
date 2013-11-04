@@ -6,6 +6,14 @@
 #include "CallbackDefinitions.h"
 #include "SocketServer.h"
 
+PatternRunner::PatternRunner()
+    : m_brightness(200)
+    , m_hue(128)
+    , m_saturation(255)
+    , m_nightMode(0)
+{
+}
+
 void PatternRunner::RegisterCallbacks(
     std::map<
         unsigned int,
@@ -42,6 +50,19 @@ void PatternRunner::UnregisterCallbacks(
 void PatternRunner::ReadSettingsCallback(const SocketCommand& command)
 {
     std::cout << "ReadSettings command received." << std::endl;
+    uint8_t response[4] = {};
+
+    response[0] = m_brightness;
+    response[1] = m_hue;
+    response[2] = m_saturation;
+    response[3] = m_nightMode;
+
+    std::cout << "ReadSettings: B: " << 
+        (int)m_brightness << " H: " << 
+        (int)m_hue << " S: " << 
+        (int)m_saturation << " NM: " << 
+        (int)m_nightMode << std::endl;
+    command.Ack(sizeof(response), response);
 }
 
 void PatternRunner::WriteSettingsCallback(const SocketCommand& command)
