@@ -28,6 +28,11 @@ void LightsCore::DispatcherCallback(const SocketCommand& command)
 void LightsCore::Run()
 {
     Driver::OpenDevice();
+    Driver::InitializeBulbs();
+
+    // Green bulb!
+    Driver::SetBulb(0, 200, 0, 13, 0);
+
     std::cout << "Initializing main routine..." << std::endl;
     m_patternRunner.Start();
     m_socketServer.BeginListening();
