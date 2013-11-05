@@ -13,12 +13,13 @@ PatternRunner::PatternRunner()
     , m_hue(128)
     , m_saturation(255)
     , m_nightMode(0)
+    , m_pendingReset(false)
 {
 }
 
 PatternRunner::~PatternRunner()
 {
-
+    Stop();
 }
 
 void PatternRunner::RegisterCallbacks(
@@ -84,6 +85,10 @@ void PatternRunner::WriteSettingsCallback(const SocketCommand& command)
     m_brightness = request[0];
     m_hue = request[1];
     m_saturation = request[2];
+
+    if (m_nightMode != request[3]) {
+        m_pendingReset = true;
+    }
     m_nightMode = request[3];
 
     std::cout << "WriteSettings: B: " << 
@@ -101,17 +106,71 @@ void PatternRunner::ResetDeviceCallback(const SocketCommand& command)
 
 void PatternRunner::Start()
 {
-    // Ensure device is initialized.
-    // Start tick thread to submit new
-    // LightBoards to it.
+    if (!m_isRunning) {
+        m_isRunning = true;
+        m_tickThread = std::thread(&PatternRunner::Run, this);
+    }
 }
 
 void PatternRunner::Stop()
 {
-    // Stop/Join the running tick thread.
+    if (m_isRunning) {
+        m_isRunning = false;
+        m_tickThread.join();
+    }
 }
 
 void PatternRunner::Run()
 {
+    while (m_isRunning) {
+        std::vector<std::pair<int, BulbCommand>> cmds;
+
+        if (m_pendingReset) {
+            m_board.Reset(true);
+            m_pendingReset = false;
+        }
+        else if (!m_nightMode) {
+            if (m_pCurrentPattern) {
+                m_pCurrentPattern->Tick(m_board);
+            }
+        }
+
+        m_board.GetUpdate(cmds);
+
+        for (auto iter = cmds.begin(); iter != cmds.end(); iter++) {
+            ApplyBrightness((*iter).second);
+            ApplySaturation((*iter).second);
+            ApplyHue((*iter).second); 
+            Driver::SetBulb(static_cast<uint8_t>((*iter).first),
+                (*iter).second.brightness,
+                (*iter).second.red,
+                (*iter).second.green,
+                (*iter).second.blue);
+        }
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    } 
+}
+
+void PatternRunner::SetPattern(IPattern* pPattern)
+{
+    m_pCurrentPattern = pPattern;
+}
+
+void PatternRunner::ApplyBrightness(BulbCommand& cmd)
+{
+    cmd.brightness = static_cast<uint8_t>(
+        cmd.brightness * (static_cast<double>(m_brightness) / 255));
+}
+
+void PatternRunner::ApplySaturation(BulbCommand& cmd)
+{
 
 }
+
+void PatternRunner::ApplyHue(BulbCommand& cmd)
+{
+
+}
+
+

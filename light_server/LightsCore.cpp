@@ -35,6 +35,7 @@ void LightsCore::Run()
 
     std::cout << "Initializing main routine..." << std::endl;
     m_patternRunner.Start();
+    m_patternRunner.SetPattern(&m_rainbowPattern);
     m_socketServer.BeginListening();
 }
 

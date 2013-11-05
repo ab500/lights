@@ -2,7 +2,7 @@
 
 #include "LightBoard.h"
 
-class IPattern
+struct IPattern
 {
-    virtual void Tick(LightBoard & lightBoard);
+    virtual void Tick(LightBoard & lightBoard) = 0;
 };

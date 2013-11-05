@@ -40,9 +40,14 @@ private:
     uint8_t m_hue;
     uint8_t m_saturation;
     uint8_t m_nightMode;
+    bool m_pendingReset;
 
     void ReadSettingsCallback(const SocketCommand& command);
     void WriteSettingsCallback(const SocketCommand& command);
     void ResetDeviceCallback(const SocketCommand& command);
     void Run();
+
+    void ApplyBrightness(BulbCommand & cmd);
+    void ApplySaturation(BulbCommand & cmd);
+    void ApplyHue(BulbCommand & cmd);
 };

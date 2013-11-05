@@ -9,6 +9,7 @@
 #include "SocketServer.h"
 #include "SocketTester.h"
 #include "PatternRunner.h"
+#include "RainbowPattern.h"
 
 class LightsCore
 {
@@ -24,6 +25,8 @@ private:
     PatternRunner m_patternRunner;
     SocketTester m_socketTester;
     SocketServer m_socketServer;
+
+    RainbowPattern m_rainbowPattern;
 
     std::map<
         unsigned int, 

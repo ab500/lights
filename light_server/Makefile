@@ -1,7 +1,7 @@
 CC=$(CROSS_COMPILE)g++
 CFLAGS=-c -Wall -std=c++11
 LDFLAGS=-pthread
-SOURCES=main.cpp Driver.cpp LightBoard.cpp LightsCore.cpp PatternRunner.cpp SocketServer.cpp SocketTester.cpp
+SOURCES=main.cpp Driver.cpp LightBoard.cpp LightsCore.cpp PatternRunner.cpp SocketServer.cpp SocketTester.cpp RainbowPattern.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=lights
 
